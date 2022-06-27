@@ -253,10 +253,15 @@ def evaluate(adata, cluster_edges, k_cluster, k_velocity, x_emb="X_umap", verbos
     """
     
     trans_probs = cross_boundary_scvelo_probs(adata, k_cluster, cluster_edges, "{}_graph".format(k_velocity), True)
+    # Cross-Boundary Confidence Score (A->B).
     crs_bdr_coh = cross_boundary_coh(adata, k_cluster, k_velocity, cluster_edges, True)
+    # Cross-Boundary Velocity Coherence Score
     crs_bdr_crc = cross_boundary_correctness(adata, k_cluster, k_velocity, cluster_edges, True, x_emb)
+    # Cross-Boundary Direction Correctness Score
     ic_coh = inner_cluster_coh(adata, k_cluster, k_velocity, True)
+    # In-cluster Coherence Score.
     ic_scvelo_coh = in_cluster_scvelo_coh(adata, k_cluster, "{}_confidence".format(k_velocity), True)
+    # In-Cluster Confidence Score.
     
     if verbose:
         print("# Cross-Boundary Transition Score (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(trans_probs)))
