@@ -66,7 +66,7 @@ def cross_boundary_scvelo_probs(adata, k_cluster, cluster_edges, k_trans_g, retu
         nbs = adata.uns['neighbors']['indices'][sel]
         boundary_nodes = map(lambda nodes:keep_type(adata, nodes, v, k_cluster), nbs)
         type_score = [trans_probs.toarray()[:, nodes].mean() 
-                      for trans_probs, nodes in zip(adata.uns[k_trans_g][sel], boundary_nodes) 
+                      for trans_probs, nodes in zip(adata.obsp[k_trans_g][sel], boundary_nodes) 
                       if len(nodes) > 0]
         scores[(u, v)] = np.mean(type_score)
         all_scores[(u, v)] = type_score
@@ -169,11 +169,13 @@ def cross_boundary_correctness(adata,
     scores = {}
     all_scores = {}
     
+    
     x_emb = adata.obsm[x_emb]
     if x_emb == "X_umap":
         v_emb = adata.obsm['{}_umap'.format(k_velocity)]
     else:
-        v_emb = adata.obsm[[key for key in adata.obsm if key.startswith(k_velocity)][0]]
+        # v_emb = adata.obsm[[key for key in adata.obsm if key.startswith(k_velocity)][0]]
+        v_emb = adata.obsm['velocity_umap']
         
     for u, v in cluster_edges:
         sel = adata.obs[k_cluster] == u
@@ -252,7 +254,9 @@ def evaluate(adata, cluster_edges, k_cluster, k_velocity, x_emb="X_umap", verbos
     
     """
     
-    trans_probs = cross_boundary_scvelo_probs(adata, k_cluster, cluster_edges, "{}_graph".format(k_velocity), True)
+    trans_probs = cross_boundary_scvelo_probs(adata, k_cluster, cluster_edges, 'pearson_transition_matrix', True)
+
+    # "{}_graph".format(k_velocity)
     # Cross-Boundary Confidence Score (A->B).
     crs_bdr_coh = cross_boundary_coh(adata, k_cluster, k_velocity, cluster_edges, True)
     # Cross-Boundary Velocity Coherence Score
@@ -260,7 +264,7 @@ def evaluate(adata, cluster_edges, k_cluster, k_velocity, x_emb="X_umap", verbos
     # Cross-Boundary Direction Correctness Score
     ic_coh = inner_cluster_coh(adata, k_cluster, k_velocity, True)
     # In-cluster Coherence Score.
-    ic_scvelo_coh = in_cluster_scvelo_coh(adata, k_cluster, "{}_confidence".format(k_velocity), True)
+    ic_scvelo_coh = in_cluster_scvelo_coh(adata, k_cluster, 'jaccard_velocity_confidence', True)
     # In-Cluster Confidence Score.
     
     if verbose:
